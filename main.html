@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CARDS JOMUS</title>
+  <style>
+    /* Общие стили */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #1a1a1a; /* Однотонный тёмный фон */
+      color: #fff;
+      overflow-x: hidden;
+    }
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 15px;
+      margin: 5px;
+      background-color: #8B0000;
+      color: #fff;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #A50000;
+    }
+    /* Верхняя панель инструментов */
+    #toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 10px 15px;
+      background-color: #222;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    #toolbar button {
+      font-size: 14px;
+    }
+    /* Панель разделов */
+    #sections {
+      display: flex;
+      padding: 5px 15px;
+      background-color: #111;
+    }
+    .section-tab {
+      padding: 8px 12px;
+      margin-right: 5px;
+      background-color: #8B0000;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .section-tab.active {
+      background-color: #fff;
+      color: #000;
+    }
+    .section-tab:hover {
+      background-color: #A50000;
+    }
+    /* Контейнер для карточек */
+    #cards-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      grid-gap: 20px;
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .card {
+      background-color: #222;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.3s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      width: 300px;
+      height: 200px;
+      margin: 0 auto;
+      overflow: hidden;
+    }
+    .card:hover {
+      transform: scale(1.03);
+    }
+    .card-content {
+      padding: 10px;
+    }
+    /* Кнопка добавления карточки */
+    #add-card {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 60px;
+      height: 60px;
+      background-color: #fff;
+      color: #000;
+      font-size: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+      z-index: 150;
+    }
+    /* Стрелки навигации */
+    .nav-arrow {
+      position: fixed;
+      bottom: 30px;
+      font-size: 30px;
+      background-color: rgba(139,0,0,0.8);
+      color: #fff;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 140;
+      transition: background-color 0.3s;
+    }
+    .nav-arrow:hover {
+      background-color: rgba(165,0,0,0.8);
+    }
+    #prev-page-btn {
+      left: 30px;
+    }
+    #next-page-btn {
+      right: 100px;
+    }
+    /* Контекстное меню */
+    #context-menu {
+      position: absolute;
+      display: none;
+      background-color: #333;
+      border: 1px solid #444;
+      border-radius: 5px;
+      z-index: 2000;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.6);
+    }
+    #context-menu button {
+      background: none;
+      border: none;
+      color: #fff;
+      padding: 10px 15px;
+      text-align: left;
+      width: 100%;
+      cursor: pointer;
+    }
+    #context-menu button:hover {
+      background-color: #444;
+    }
+    /* Модальные окна */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.8);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 10px;
+    }
+    .modal-content {
+      background-color: #333;
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 500px;
+      position: relative;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+    .modal-content h2 {
+      margin-top: 0;
+    }
+    .close-modal {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      cursor: pointer;
+      font-size: 24px;
+    }
+    input[type="text"], textarea, select {
+      width: 100%;
+      padding: 8px;
+      margin: 5px 0 15px;
+      border-radius: 5px;
+      border: none;
+    }
+    input[type="file"] {
+      margin-bottom: 15px;
+      color: #000;
+    }
+    /* Режим игры */
+    #game-mode {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      background-color: rgba(0,0,0,0.95);
+      width: 100%;
+      height: 100%;
+      z-index: 2000;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 20px;
+    }
+    #game-mode .game-card {
+      background-color: #222;
+      padding: 30px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 500px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 200px;
+      font-size: 18px;
+      line-height: 1.4;
+    }
+    #game-mode button {
+      margin: 5px;
+      font-size: 16px;
+      padding: 10px 20px;
+    }
+    #game-stats {
+      margin-top: 10px;
+      font-size: 16px;
+    }
+    /* Водяной знак */
+    #watermark {
+      position: fixed;
+      bottom: 5px;
+      right: 5px;
+      font-size: 12px;
+      opacity: 0.5;
+      z-index: 3000;
+    }
+  </style>
+</head>
+<body>
+  <!-- Верхняя панель инструментов -->
+  <div id="toolbar">
+    <button id="fullscreen-btn">Полный экран</button>
+    <button id="play-btn">Играть</button>
+    <button id="print-btn">Печать</button>
+    <button id="new-section-btn">Новый раздел</button>
+    <button id="rename-section-btn">Переименовать раздел</button>
+    <button id="delete-section-btn">Удалить раздел</button>
+    <button id="settings-btn">Настройки</button>
+    <button id="save-btn">Сохранить</button>
+  </div>
+
+  <!-- Панель разделов -->
+  <div id="sections">
+    <div class="section-tab active" data-id="section-1">Раздел 1</div>
+  </div>
+
+  <!-- Контейнер для карточек -->
+  <div id="cards-container">
+    <!-- Карточки добавляются динамически -->
+  </div>
+
+  <!-- Стрелки навигации -->
+  <div id="prev-page-btn" class="nav-arrow">&larr;</div>
+  <div id="next-page-btn" class="nav-arrow">&rarr;</div>
+
+  <!-- Кнопка добавления карточки -->
+  <div id="add-card">+</div>
+
+  <!-- Контекстное меню (при правом клике по карточке) -->
+  <div id="context-menu">
+    <button id="cm-edit">Редактировать</button>
+    <button id="cm-delete">Удалить</button>
+  </div>
+
+  <!-- Модальное окно редактора карточки -->
+  <div id="card-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" id="close-card-modal">&times;</span>
+      <h2 id="card-modal-title">Новая карточка</h2>
+      <label for="question-text">Вопрос:</label>
+      <textarea id="question-text" rows="3" placeholder="Введите вопрос"></textarea>
+      <label for="answer-text">Ответ:</label>
+      <textarea id="answer-text" rows="3" placeholder="Введите ответ"></textarea>
+      
+      <!-- Выбор изображения для вопроса -->
+      <label for="question-img-file">Изображение для вопроса:</label>
+      <input type="file" id="question-img-file" accept="image/*">
+      <div id="question-img-preview"></div>
+      
+      <!-- Выбор изображения для ответа -->
+      <label for="answer-img-file">Изображение для ответа:</label>
+      <input type="file" id="answer-img-file" accept="image/*">
+      <div id="answer-img-preview"></div>
+      
+      <button id="save-card-btn">Сохранить карточку</button>
+    </div>
+  </div>
+
+  <!-- Модальное окно настроек -->
+  <div id="settings-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" id="close-settings-modal">&times;</span>
+      <h2>Настройки</h2>
+      <label for="save-method">Метод сохранения:</label>
+      <select id="save-method">
+        <option value="json">JSON</option>
+        <option value="qsettings">QSettings</option>
+      </select>
+      <label for="json-path">Путь к JSON файлу:</label>
+      <input type="text" id="json-path" placeholder="например, /path/to/file.json">
+      <label for="autosave-toggle">
+        <input type="checkbox" id="autosave-toggle" checked> Автосохранение (каждые 60 секунд)
+      </label>
+      <button id="save-settings-btn">Сохранить настройки</button>
+    </div>
+  </div>
+
+  <!-- Модальное окно для создания/переименования раздела -->
+  <div id="section-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" id="close-section-modal">&times;</span>
+      <h2 id="section-modal-title">Новый раздел</h2>
+      <label for="section-name">Название раздела:</label>
+      <input type="text" id="section-name" placeholder="Введите название раздела">
+      <button id="save-section-btn">Сохранить раздел</button>
+    </div>
+  </div>
+
+  <!-- Модальное окно подтверждения -->
+  <div id="confirm-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" id="close-confirm-modal">&times;</span>
+      <h2>Подтверждение</h2>
+      <p id="confirm-message">Вы уверены?</p>
+      <button id="confirm-yes-btn">Да</button>
+      <button id="confirm-no-btn">Нет</button>
+    </div>
+  </div>
+
+  <!-- Режим игры -->
+  <div id="game-mode">
+    <div class="game-card" id="game-card">
+      <div id="game-card-content">Карточка</div>
+    </div>
+    <div id="game-controls">
+      <button id="flip-btn">Перевернуть</button>
+      <button id="know-btn">Знаю</button>
+      <button id="dont-know-btn">Плохо знаю</button>
+      <button id="stop-game-btn">Стоп</button>
+    </div>
+    <div id="game-stats"></div>
+  </div>
+
+  <!-- Водяной знак -->
+  <div id="watermark">JOMUS</div>
+
+  <!-- Скрипты -->
+  <script>
+    /******************************************************************
+     * Глобальные переменные и структура данных
+     ******************************************************************/
+    let appData = {
+      settings: {
+        saveMethod: "json",
+        jsonPath: "",
+        autosave: true
+      },
+      sections: {
+        "section-1": {
+          name: "Раздел 1",
+          cards: []  // Каждый элемент: {question, answer, questionImg, answerImg}
+        }
+      },
+      currentSection: "section-1",
+      currentPage: 1,
+      cardsPerPage: 9,
+      game: {
+        active: false,
+        queue: [],
+        correct: 0,
+        wrong: 0,
+        startTime: null
+      }
+    };
+
+    let editingCardIndex = null;
+    let confirmCallback = null;
+    let contextCardIndex = null; // для хранения индекса карточки, по которой вызвано контекстное меню
+
+    /******************************************************************
+     * Функции для работы с разделами
+     ******************************************************************/
+    function renderSections() {
+      const sectionsDiv = document.getElementById('sections');
+      sectionsDiv.innerHTML = '';
+      for (let sectionId in appData.sections) {
+        const tab = document.createElement('div');
+        tab.classList.add('section-tab');
+        if (sectionId === appData.currentSection) tab.classList.add('active');
+        tab.dataset.id = sectionId;
+        tab.textContent = appData.sections[sectionId].name;
+        tab.addEventListener('click', () => {
+          appData.currentSection = sectionId;
+          appData.currentPage = 1;
+          renderSections();
+          renderCards();
+        });
+        sectionsDiv.appendChild(tab);
+      }
+    }
+
+    function createSection(name) {
+      const sectionId = 'section-' + (Object.keys(appData.sections).length + 1);
+      appData.sections[sectionId] = { name: name, cards: [] };
+      appData.currentSection = sectionId;
+      appData.currentPage = 1;
+      renderSections();
+      renderCards();
+    }
+
+    function deleteSection(sectionId) {
+      if (Object.keys(appData.sections).length <= 1) {
+        alert("Невозможно удалить последний раздел!");
+        return;
+      }
+      delete appData.sections[sectionId];
+      appData.currentSection = Object.keys(appData.sections)[0];
+      appData.currentPage = 1;
+      renderSections();
+      renderCards();
+    }
+
+    /******************************************************************
+     * Функции для работы с карточками
+     ******************************************************************/
+    function renderCards() {
+      const container = document.getElementById('cards-container');
+      container.innerHTML = '';
+      const cards = appData.sections[appData.currentSection].cards;
+      const startIndex = (appData.currentPage - 1) * appData.cardsPerPage;
+      const endIndex = startIndex + appData.cardsPerPage;
+      const cardsOnPage = cards.slice(startIndex, endIndex);
+      cardsOnPage.forEach((card, index) => {
+        const cardDiv = document.createElement('div');
+        cardDiv.classList.add('card');
+        // Формирование содержимого карточки (вопрос и, если есть, изображение)
+        let innerHTML = `<div class="card-content"><strong>${card.question}</strong>`;
+        if (card.questionImg) {
+          innerHTML += `<br><img src="${card.questionImg}" alt="Изображение" style="max-width:80%; max-height:80%; margin-top:5px;">`;
+        }
+        innerHTML += `</div>`;
+        cardDiv.innerHTML = innerHTML;
+        // Левый клик — переворот карточки
+        cardDiv.addEventListener('click', () => {
+          flipCard(cardDiv, card);
+        });
+        // Правый клик — открытие кастомного контекстного меню
+        cardDiv.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          contextCardIndex = startIndex + index;
+          showContextMenu(e.pageX, e.pageY);
+        });
+        container.appendChild(cardDiv);
+      });
+    }
+
+    function flipCard(cardDiv, card) {
+      cardDiv.style.transform = "rotateY(180deg)";
+      setTimeout(() => {
+        cardDiv.innerHTML = `<div class="card-content"><strong>${card.answer}</strong>`;
+        if (card.answerImg) {
+          cardDiv.innerHTML += `<br><img src="${card.answerImg}" alt="Изображение" style="max-width:80%; max-height:80%; margin-top:5px;">`;
+        }
+        cardDiv.innerHTML += `</div>`;
+      }, 300);
+      setTimeout(() => {
+        cardDiv.style.transform = "rotateY(0deg)";
+        setTimeout(() => {
+          let innerHTML = `<div class="card-content"><strong>${card.question}</strong>`;
+          if (card.questionImg) {
+            innerHTML += `<br><img src="${card.questionImg}" alt="Изображение" style="max-width:80%; max-height:80%; margin-top:5px;">`;
+          }
+          innerHTML += `</div>`;
+          cardDiv.innerHTML = innerHTML;
+        }, 300);
+      }, 10000);
+    }
+
+    /******************************************************************
+     * Кастомное контекстное меню
+     ******************************************************************/
+    function showContextMenu(x, y) {
+      const cm = document.getElementById('context-menu');
+      cm.style.top = y + "px";
+      cm.style.left = x + "px";
+      cm.style.display = "block";
+    }
+    function hideContextMenu() {
+      document.getElementById('context-menu').style.display = "none";
+    }
+
+    // Обработка нажатий в контекстном меню
+    document.getElementById('cm-edit').addEventListener('click', () => {
+      openCardModal(contextCardIndex);
+      hideContextMenu();
+    });
+    document.getElementById('cm-delete').addEventListener('click', () => {
+      confirmAction("Вы действительно хотите удалить карточку?", () => {
+        deleteCard(contextCardIndex);
+      });
+      hideContextMenu();
+    });
+
+    // Скрывать контекстное меню при клике вне его
+    document.addEventListener('click', (e) => {
+      if (e.button !== 2) { // не реагировать на правый клик
+        hideContextMenu();
+      }
+    });
+
+    function openCardModal(cardIndex = null) {
+      editingCardIndex = cardIndex;
+      const modal = document.getElementById('card-modal');
+      const title = document.getElementById('card-modal-title');
+      const questionInput = document.getElementById('question-text');
+      const answerInput = document.getElementById('answer-text');
+      // Сброс превью изображений
+      document.getElementById('question-img-preview').innerHTML = "";
+      document.getElementById('answer-img-preview').innerHTML = "";
+      if (cardIndex !== null) {
+        title.textContent = "Редактирование карточки";
+        const card = appData.sections[appData.currentSection].cards[cardIndex];
+        questionInput.value = card.question;
+        answerInput.value = card.answer;
+        if(card.questionImg){
+          document.getElementById('question-img-preview').innerHTML = `<img src="${card.questionImg}" alt="Превью" style="max-width:100%; max-height:150px;">`;
+        }
+        if(card.answerImg){
+          document.getElementById('answer-img-preview').innerHTML = `<img src="${card.answerImg}" alt="Превью" style="max-width:100%; max-height:150px;">`;
+        }
+      } else {
+        title.textContent = "Новая карточка";
+        questionInput.value = "";
+        answerInput.value = "";
+      }
+      modal.style.display = "flex";
+    }
+
+    function saveCard() {
+      const question = document.getElementById('question-text').value.trim();
+      const answer = document.getElementById('answer-text').value.trim();
+      if (!question || !answer) {
+        alert("Вопрос и ответ обязательны!");
+        return;
+      }
+      // Получаем data URL изображений, если выбраны
+      const questionImgPreview = document.getElementById('question-img-preview').querySelector('img');
+      const answerImgPreview = document.getElementById('answer-img-preview').querySelector('img');
+      const questionImg = questionImgPreview ? questionImgPreview.src : "";
+      const answerImg = answerImgPreview ? answerImgPreview.src : "";
+      
+      const cardData = { question, answer, questionImg, answerImg };
+      if (editingCardIndex !== null) {
+        appData.sections[appData.currentSection].cards[editingCardIndex] = cardData;
+      } else {
+        appData.sections[appData.currentSection].cards.push(cardData);
+      }
+      closeModal('card-modal');
+      renderCards();
+    }
+
+    function deleteCard(index) {
+      appData.sections[appData.currentSection].cards.splice(index, 1);
+      renderCards();
+    }
+
+    /******************************************************************
+     * Навигация по страницам карточек
+     ******************************************************************/
+    function nextPage() {
+      const cards = appData.sections[appData.currentSection].cards;
+      if (appData.currentPage * appData.cardsPerPage < cards.length) {
+        appData.currentPage++;
+        renderCards();
+      }
+    }
+    function prevPage() {
+      if (appData.currentPage > 1) {
+        appData.currentPage--;
+        renderCards();
+      }
+    }
+
+    /******************************************************************
+     * Режим игры
+     ******************************************************************/
+    function startGame() {
+      const cards = appData.sections[appData.currentSection].cards;
+      if (cards.length === 0) {
+        alert("Нет карточек для игры!");
+        return;
+      }
+      appData.game.active = true;
+      appData.game.queue = shuffleArray([...cards]);
+      appData.game.correct = 0;
+      appData.game.wrong = 0;
+      appData.game.startTime = Date.now();
+      document.getElementById('game-mode').style.display = "flex";
+      showNextGameCard();
+    }
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function showNextGameCard() {
+      if (appData.game.queue.length === 0) {
+        endGame();
+        return;
+      }
+      const card = appData.game.queue[0];
+      document.getElementById('game-card-content').textContent = card.question;
+      setTimeout(() => {
+        flipGameCard(card);
+      }, 10000);
+    }
+
+    function flipGameCard(card) {
+      document.getElementById('game-card-content').textContent = card.answer;
+    }
+
+    function markCorrect() {
+      appData.game.correct++;
+      appData.game.queue.shift();
+      showNextGameCard();
+    }
+
+    function markWrong() {
+      appData.game.wrong++;
+      const card = appData.game.queue.shift();
+      appData.game.queue.push(card);
+      showNextGameCard();
+    }
+
+    function endGame() {
+      const elapsed = Date.now() - appData.game.startTime;
+      const minutes = Math.floor(elapsed / 60000);
+      const seconds = Math.floor((elapsed % 60000) / 1000);
+      const statsDiv = document.getElementById('game-stats');
+      statsDiv.innerHTML = `
+        <p>Правильных ответов: ${appData.game.correct}</p>
+        <p>Неправильных ответов: ${appData.game.wrong}</p>
+        <p>Время: ${minutes} мин ${seconds} сек</p>
+        <p>Успешность: ${Math.round((appData.game.correct / (appData.game.correct + appData.game.wrong)) * 100) || 0}%</p>
+      `;
+      appData.game.active = false;
+    }
+
+    /******************************************************************
+     * Панель инструментов
+     ******************************************************************/
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().then(() => {
+          document.getElementById('fullscreen-btn').textContent = "Оконный режим";
+        });
+      } else {
+        document.exitFullscreen().then(() => {
+          document.getElementById('fullscreen-btn').textContent = "Полный экран";
+        });
+      }
+    }
+
+    function exportToWord() {
+      let content = "Вопросы:\n\n";
+      const cards = appData.sections[appData.currentSection].cards;
+      cards.forEach((card, index) => {
+        content += `Карточка ${index + 1}:\nВопрос: ${card.question}\nОтвет: ${card.answer}\n\n`;
+      });
+      const blob = new Blob([content], {type: "text/plain;charset=utf-8"});
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "cards_export.txt";
+      link.click();
+    }
+
+    function saveData() {
+      localStorage.setItem('cardsJomusData', JSON.stringify(appData));
+      alert("Данные сохранены!");
+    }
+
+    function startAutoSave() {
+      if (appData.settings.autosave) {
+        setInterval(saveData, 60000);
+      }
+    }
+
+    /******************************************************************
+     * Модальные окна
+     ******************************************************************/
+    function closeModal(modalId) {
+      document.getElementById(modalId).style.display = "none";
+    }
+    document.querySelectorAll('.close-modal').forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.target.parentElement.parentElement.style.display = "none";
+      });
+    });
+    function confirmAction(message, callback) {
+      confirmCallback = callback;
+      document.getElementById('confirm-message').textContent = message;
+      document.getElementById('confirm-modal').style.display = "flex";
+    }
+    document.getElementById('confirm-yes-btn').addEventListener('click', () => {
+      if (confirmCallback) confirmCallback();
+      closeModal('confirm-modal');
+    });
+    document.getElementById('confirm-no-btn').addEventListener('click', () => {
+      closeModal('confirm-modal');
+    });
+
+    /******************************************************************
+     * Обработка выбора файлов для изображений с предпросмотром
+     ******************************************************************/
+    function handleFileSelect(event, previewElementId) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById(previewElementId).innerHTML = `<img src="${e.target.result}" alt="Превью" style="max-width:100%; max-height:150px;">`;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+    document.getElementById('question-img-file').addEventListener('change', (e) => {
+      handleFileSelect(e, 'question-img-preview');
+    });
+    document.getElementById('answer-img-file').addEventListener('change', (e) => {
+      handleFileSelect(e, 'answer-img-preview');
+    });
+
+    /******************************************************************
+     * Привязка событий элементов интерфейса
+     ******************************************************************/
+    document.getElementById('fullscreen-btn').addEventListener('click', toggleFullScreen);
+    document.getElementById('play-btn').addEventListener('click', startGame);
+    document.getElementById('print-btn').addEventListener('click', exportToWord);
+    document.getElementById('new-section-btn').addEventListener('click', () => {
+      document.getElementById('section-modal-title').textContent = "Новый раздел";
+      document.getElementById('section-name').value = "";
+      document.getElementById('section-modal').style.display = "flex";
+    });
+    document.getElementById('rename-section-btn').addEventListener('click', () => {
+      document.getElementById('section-modal-title').textContent = "Переименовать раздел";
+      document.getElementById('section-name').value = appData.sections[appData.currentSection].name;
+      document.getElementById('section-modal').style.display = "flex";
+    });
+    document.getElementById('delete-section-btn').addEventListener('click', () => {
+      confirmAction("Вы действительно хотите удалить раздел?", () => {
+        deleteSection(appData.currentSection);
+      });
+    });
+    document.getElementById('settings-btn').addEventListener('click', () => {
+      document.getElementById('save-method').value = appData.settings.saveMethod;
+      document.getElementById('json-path').value = appData.settings.jsonPath;
+      document.getElementById('autosave-toggle').checked = appData.settings.autosave;
+      document.getElementById('settings-modal').style.display = "flex";
+    });
+    document.getElementById('save-btn').addEventListener('click', saveData);
+    document.getElementById('add-card').addEventListener('click', () => openCardModal());
+    document.getElementById('save-card-btn').addEventListener('click', saveCard);
+    document.getElementById('next-page-btn').addEventListener('click', nextPage);
+    document.getElementById('prev-page-btn').addEventListener('click', prevPage);
+    document.getElementById('save-settings-btn').addEventListener('click', () => {
+      appData.settings.saveMethod = document.getElementById('save-method').value;
+      appData.settings.jsonPath = document.getElementById('json-path').value.trim();
+      appData.settings.autosave = document.getElementById('autosave-toggle').checked;
+      closeModal('settings-modal');
+      alert("Настройки сохранены!");
+    });
+    document.getElementById('save-section-btn').addEventListener('click', () => {
+      const name = document.getElementById('section-name').value.trim();
+      if (!name) {
+        alert("Введите название раздела");
+        return;
+      }
+      if (document.getElementById('section-modal-title').textContent === "Новый раздел") {
+        createSection(name);
+      } else {
+        appData.sections[appData.currentSection].name = name;
+        renderSections();
+      }
+      closeModal('section-modal');
+    });
+    document.getElementById('flip-btn').addEventListener('click', () => {
+      if (appData.game.queue.length > 0) {
+        flipGameCard(appData.game.queue[0]);
+      }
+    });
+    document.getElementById('know-btn').addEventListener('click', markCorrect);
+    document.getElementById('dont-know-btn').addEventListener('click', markWrong);
+    document.getElementById('stop-game-btn').addEventListener('click', () => {
+      endGame();
+      document.getElementById('game-mode').style.display = "none";
+    });
+
+    /******************************************************************
+     * Инициализация приложения
+     ******************************************************************/
+    function init() {
+      renderSections();
+      renderCards();
+      startAutoSave();
+      const savedData = localStorage.getItem('cardsJomusData');
+      if (savedData) {
+        appData = JSON.parse(savedData);
+        renderSections();
+        renderCards();
+      }
+    }
+    window.onload = init;
+  </script>
+</body>
+</html>
